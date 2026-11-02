@@ -32,9 +32,29 @@ export default function App() {
       peerOpts: {
         config: {
           iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:global.stun.twilio.com:3478' }
+            {
+              urls: "stun:stun.relay.metered.ca:80",
+            },
+            {
+              urls: "turn:global.relay.metered.ca:80",
+              username: "807477163eb8c58b7050d6af",
+              credential: "/yhJnNUdf8fRH3eN",
+            },
+            {
+              urls: "turn:global.relay.metered.ca:80?transport=tcp",
+              username: "807477163eb8c58b7050d6af",
+              credential: "/yhJnNUdf8fRH3eN",
+            },
+            {
+              urls: "turn:global.relay.metered.ca:443",
+              username: "807477163eb8c58b7050d6af",
+              credential: "/yhJnNUdf8fRH3eN",
+            },
+            {
+              urls: "turns:global.relay.metered.ca:443?transport=tcp",
+              username: "807477163eb8c58b7050d6af",
+              credential: "/yhJnNUdf8fRH3eN",
+            }
           ]
         }
       }
