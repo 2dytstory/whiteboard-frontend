@@ -28,7 +28,16 @@ export default function App() {
     
     providerRef.current = new WebrtcProvider(roomName, ydocRef.current, {
       signaling: ['wss://p2p-whiteboard-backend.onrender.com/'],
-      filterBcConns: false
+      filterBcConns: false,
+      peerOpts: {
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' }
+          ]
+        }
+      }
     });
 
     // Track when a connection to the signaling server is established
@@ -166,45 +175,6 @@ export default function App() {
     yStrokesRef.current.delete(0, yStrokesRef.current.length);
   };
 
-  // return (
-  //   <>
-  //     <div className="toolbar">
-  //       <input 
-  //         type="color" 
-  //         value={color} 
-  //         onChange={(e) => setColor(e.target.value)} 
-  //         disabled={isReadOnly}
-  //       />
-  //       <input 
-  //         type="range" 
-  //         min="1" max="20" 
-  //         value={lineWidth} 
-  //         onChange={(e) => setLineWidth(Number(e.target.value))}
-  //         disabled={isReadOnly}
-  //       />
-  //       <button onClick={() => setColor('#FFFFFF')} disabled={isReadOnly}>Eraser</button>
-  //       <button onClick={clearBoard} disabled={isReadOnly}>Clear Board</button>
-        
-  //       <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-  //         <input 
-  //           type="checkbox" 
-  //           checked={isReadOnly} 
-  //           onChange={(e) => setIsReadOnly(e.target.checked)} 
-  //         />
-  //         Spectator Mode
-  //       </label>
-  //     </div>
-
-  //     <canvas
-  //       ref={canvasRef}
-  //       onPointerDown={startDrawing}
-  //       onPointerMove={draw}
-  //       onPointerUp={stopDrawing}
-  //       onPointerOut={stopDrawing}
-  //     />
-  //   </>
-  // );
-
   return (
     <>
       <div className="toolbar-container">
@@ -220,7 +190,7 @@ export default function App() {
         >
           <Pen size={22} strokeWidth={2.5} />
         </button>
-        
+
         {/* Eraser Tool */}
         <button 
           className={`tool-btn ${isEraser && !isReadOnly ? 'active' : ''}`}
@@ -234,9 +204,9 @@ export default function App() {
         >
           <Eraser size={22} strokeWidth={2.5} />
         </button>
-        
+
         <div className="divider" />
-        
+
         {/* Color Picker Component */}
         <div className="color-picker-wrapper" style={{ opacity: isReadOnly ? 0.4 : 1 }}>
           <input 
@@ -250,9 +220,9 @@ export default function App() {
             disabled={isReadOnly}
           />
         </div>
-          
+
         <div className="divider" />
-          
+
         {/* Brush Size Slider */}
         <div className="slider-container" style={{ opacity: isReadOnly ? 0.4 : 1 }}>
           <Circle size={14} strokeWidth={3} />
@@ -265,9 +235,9 @@ export default function App() {
           />
           <Circle size={22} strokeWidth={3} />
         </div>
-          
+
         <div className="divider" />
-          
+
         {/* Clear Canvas */}
         <button 
           className="tool-btn" 
@@ -277,9 +247,9 @@ export default function App() {
         >
           <Trash2 size={22} strokeWidth={2.5} />
         </button>
-          
+
         <div className="divider" />
-          
+
         {/* Spectator Mode Toggle */}
         <button 
           className={`tool-btn ${isReadOnly ? 'active' : ''}`} 
@@ -289,7 +259,7 @@ export default function App() {
           {isReadOnly ? <Eye size={22} strokeWidth={2.5} /> : <EyeOff size={22} strokeWidth={2.5} />}
         </button>
       </div>
-          
+
       <canvas
         ref={canvasRef}
         onPointerDown={startDrawing}
