@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
-import { WebrtcProvider } from 'y-webrtc';
+import { WebsocketProvider } from 'y-websocket';
 import { Pen, Eraser, Trash2, Eye, EyeOff, Circle } from 'lucide-react';
 
 export default function App() {
@@ -25,62 +25,41 @@ export default function App() {
     ydocRef.current = new Y.Doc();
     const roomName = window.location.hash.substring(1) || 'room-0';
     window.location.hash = roomName;
-    
-    providerRef.current = new WebrtcProvider(roomName, ydocRef.current, {
-      signaling: ['wss://p2p-whiteboard-backend.onrender.com/'],
-      filterBcConns: false,
-      peerOpts: {
-        config: {
-          iceServers: [
-            {
-              urls: "stun:stun.relay.metered.ca:80",
-            },
-            {
-              urls: "turn:global.relay.metered.ca:80",
-              username: "807477163eb8c58b7050d6af",
-              credential: "/yhJnNUdf8fRH3eN",
-            },
-            {
-              urls: "turn:global.relay.metered.ca:80?transport=tcp",
-              username: "807477163eb8c58b7050d6af",
-              credential: "/yhJnNUdf8fRH3eN",
-            },
-            {
-              urls: "turn:global.relay.metered.ca:443",
-              username: "807477163eb8c58b7050d6af",
-              credential: "/yhJnNUdf8fRH3eN",
-            },
-            {
-              urls: "turns:global.relay.metered.ca:443?transport=tcp",
-              username: "807477163eb8c58b7050d6af",
-              credential: "/yhJnNUdf8fRH3eN",
-            }
-          ]
-        }
-      }
+
+    providerRef.current = new WebsocketProvider(
+      'wss://p2p-whiteboard-backend.onrender.com',
+      // 'ws://localhost:1234',
+      roomName,
+      ydocRef.current
+    );
+
+    // Track WebSocket connection status
+    providerRef.current.on('status', event => {
+      console.log('WebSocket status:', event.status);
     });
 
-    // Track when a connection to the signaling server is established
-    providerRef.current.on('synced', synced => {
-      console.log('WebRTC Synced:', synced);
-    });
-
-    // Track when other users actually join your room
-    providerRef.current.on('peers', peers => {
-      console.log('Connected peers count:', peers.webrtcPeers.length);
+    // Track when the canvas data is fully synced with the server
+    providerRef.current.on('sync', isSynced => {
+      console.log('WebSocket Synced:', isSynced);
     });
 
     yStrokesRef.current = ydocRef.current.getArray('strokes');
     yStrokesRef.current.observeDeep(() => {
+      console.log('Received Yjs update!');
       redrawCanvas();
     });
 
     const handleResize = () => {
       const canvas = canvasRef.current;
+      if (!canvas) return;
+      
       const ctx = canvas.getContext('2d');
       const ratio = window.devicePixelRatio || 1;
+      
+      // Fixed the syntax error on these two lines
       canvas.width = window.innerWidth * ratio;
       canvas.height = window.innerHeight * ratio;
+      
       canvas.style.width = `${window.innerWidth}px`;
       canvas.style.height = `${window.innerHeight}px`;
       ctx.scale(ratio, ratio);
@@ -92,8 +71,8 @@ export default function App() {
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      providerRef.current.destroy();
-      ydocRef.current.destroy();
+      if (providerRef.current) providerRef.current.destroy();
+      if (ydocRef.current) ydocRef.current.destroy();
     };
   }, []);
 
