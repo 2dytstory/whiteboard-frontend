@@ -3,44 +3,79 @@
   margin: 0;
   padding: 0;
   font-family: system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
-body, html, #root {
-  width: 100vw;
-  height: 100vh;
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  /* real visible height on mobile (ignores the collapsing address bar) */
   overflow: hidden;
   background-color: #f9fafb;
   touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  /* no long-press menu on iOS while drawing */
 }
 
 canvas {
-  cursor: crosshair;
   display: block;
+  touch-action: none;
   background: #ffffff;
+  /* overridden inline by the whiteboard / blackboard toggle */
 }
 
-/* Floating Pill Toolbar */
+canvas.is-draw {
+  cursor: none;
+}
+
+/* our circle cursor replaces the native one */
+canvas.is-hand {
+  cursor: grab;
+}
+
+/* Circle cursor that follows the mouse / stylus */
+.brush-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: none;
+  box-sizing: border-box;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* ---------- Floating pill toolbar (laptop / desktop / large tablet) ---------- */
 .toolbar-container {
   position: fixed;
-  bottom: 30px;
   left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  background: #ffffff;
+  max-width: calc(100% - 16px);
   padding: 12px 24px;
+  background: #ffffff;
   border-radius: 9999px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
   border: 1px solid #e5e7eb;
   z-index: 50;
-  transition: opacity 0.3s ease;
+  touch-action: manipulation;
 }
 
 .tool-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -67,41 +102,48 @@ canvas {
 }
 
 .divider {
+  flex: 0 0 auto;
   width: 1px;
   height: 24px;
   background: #e5e7eb;
   margin: 0 4px;
 }
 
-/* Custom Circular Color Picker */
+/* Circular colour picker */
 .color-picker-wrapper {
   position: relative;
+  flex: 0 0 auto;
   width: 32px;
   height: 32px;
   border-radius: 50%;
   overflow: hidden;
   cursor: pointer;
   border: 2px solid #e5e7eb;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s ease;
 }
 
-.color-picker-wrapper:hover { transform: scale(1.1); }
-.color-picker-wrapper:focus-within { border-color: #3b82f6; }
+.color-picker-wrapper:hover {
+  transform: scale(1.1);
+}
+
+.color-picker-wrapper:focus-within {
+  border-color: #3b82f6;
+}
 
 .color-picker-wrapper input[type="color"] {
   position: absolute;
-  top: -10px; 
-  left: -10px; 
-  width: 60px; 
+  top: -10px;
+  left: -10px;
+  width: 60px;
   height: 60px;
-  cursor: pointer; 
-  border: none; 
-  padding: 0; 
+  cursor: pointer;
+  border: none;
+  padding: 0;
   background: none;
 }
 
-/* Custom Range Slider */
+/* Brush size slider */
 .slider-container {
   display: flex;
   align-items: center;
@@ -109,8 +151,13 @@ canvas {
   color: #9ca3af;
 }
 
+.slider-container svg {
+  flex: 0 0 auto;
+}
+
 input[type="range"] {
   -webkit-appearance: none;
+  appearance: none;
   width: 100px;
   background: transparent;
   cursor: pointer;
@@ -130,8 +177,109 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 50%;
   background: #3b82f6;
   margin-top: -6px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: transform 0.1s ease;
 }
 
-input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 9999px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border: none;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Bigger slider thumb for finger input (phones / tablets) */
+@media (pointer: coarse) {
+  input[type="range"]::-webkit-slider-thumb {
+    height: 26px;
+    width: 26px;
+    margin-top: -10px;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    height: 26px;
+    width: 26px;
+  }
+}
+
+/* ---------- Compact toolbar: phones and small tablets ----------
+   Row 1: tools, colour, actions. Row 2: full-width brush size slider. */
+@media (max-width: 720px) {
+  .toolbar-container {
+    left: 8px;
+    right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    transform: none;
+    max-width: none;
+    flex-wrap: wrap;
+    gap: 6px 4px;
+    padding: 8px 10px;
+    border-radius: 24px;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .tool-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .slider-container {
+    order: 10;
+    flex: 1 1 100%;
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .slider-container input[type="range"] {
+    flex: 1;
+    width: auto;
+    max-width: 320px;
+  }
+}
+
+/* Very narrow phones (iPhone SE, small Androids) */
+@media (max-width: 380px) {
+  .toolbar-container {
+    padding: 6px 8px;
+  }
+
+  .tool-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .color-picker-wrapper {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* Phones in landscape: very little height, so keep the bar tight */
+@media (max-height: 480px) and (orientation: landscape) {
+  .toolbar-container {
+    bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    padding: 6px 16px;
+    gap: 8px;
+  }
+
+  .tool-btn {
+    width: 36px;
+    height: 36px;
+  }
+}
